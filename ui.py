@@ -13,13 +13,8 @@ class UI(tk.Frame):
 		tk.Frame.__init__(self, master)
 		self.widgets()
 
-	def handle_payment(self, info: UIInfo):
-
-		# **************************************
-		# Below is the code you need to refactor
-		# **************************************
-
-		# get number of tariefeenheden
+	# retrieve the ticket price using tariefeenheden, class type and discount type			
+	def retrieve_ticket_price(self, info: UIInfo):
 		tariefeenheden: int = Tariefeenheden.get_tariefeenheden(info.from_station, info.to_station)
 
 		# compute the column in the table based on choices
@@ -34,32 +29,71 @@ class UI(tk.Frame):
 			table_column += 2
 
 		# compute price
-		price: float = PricingTable.get_price (tariefeenheden, table_column)
+		price: float = PricingTable.get_price(tariefeenheden, table_column)
 		if info.way == UIWay.Return:
 			price *= 2
+# add transaction costs
+	def add_transaction_costs(price: float):
+		price += 0.50
 
-		# add 50 cents if paying with credit card
-		if info.payment == UIPayment.CreditCard:
-			price += 0.50
-		
-		# pay
-		if info.payment == UIPayment.CreditCard:
+# pay using creditcard
+	def creditcard_payment(price):
+
+		# add transaction costs before payment
+			price: add_transaction_costs(price)
+
 			c = CreditCard()
 			c.connect()
 			ccid: int = c.begin_transaction(round(price, 2))
 			c.end_transaction(ccid)
 			c.disconnect()
-		elif info.payment == UIPayment.DebitCard:
+
+# pay using debitcard
+	def debitcard_payment(self):
+
 			d = DebitCard()
 			d.connect()
 			dcid: int = d.begin_transaction(round(price, 2))
 			d.end_transaction(dcid)
 			d.disconnect()
-		elif info.payment == UIPayment.Cash:
+
+# pay using cash
+	def cash_payment():
 			coin = IKEAMyntAtare2000()
 			coin.starta()
 			coin.betala(int(round(price * 100)))
 			coin.stoppa()
+
+
+
+	def select_payment_method(self, price, info):
+
+	
+		if info.payment == UIPayment.CreditCard:
+
+			creditcard_payment(price)
+
+
+		elif info.payment == UIPayment.DebitCard:
+
+			debitcard_payment(price)
+
+		elif info.payment == UIPayment.Cash:
+
+			cash_payment(price)
+
+
+	def handle_payment(self, info: UIInfo):
+
+		# **************************************
+		# Below is the code you need to refactor
+		# **************************************
+
+		price: retrieve_ticket_price(self)
+
+		select_payment_method(price, info)
+
+
 
 #region UI Set-up below -- you don't need to change anything
 
